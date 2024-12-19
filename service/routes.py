@@ -1,13 +1,9 @@
 from flask import Flask, request, jsonify
-from models import db, Reservation
+from flask import current_app as app 
+from service.models import db, Reservation, Account, Company, Customer, CarType, BranchLocation
 import joblib
+from datetime import timedelta
 
-app = Flask(__name__)
-
-# Initialize database and app context
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///your_database.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db.init_app(app)
 
 @app.route('/')
 def index():
@@ -62,23 +58,95 @@ def list_reservations_by_account(account_id):
 
 
 # Load the trained model
-estimator = joblib.load('rental_price_model.pkl')
+# estimator = joblib.load('rental_price_model.pkl')
 
-@app.route('/predict-price', methods=['POST'])
-def predict_price():
-    data = request.json
-    try:
-        estimated_price = estimator.estimate_price(
-            car_brand=data['Car_Brand'],
-            car_model=data['Car_Model'],
-            seats=data['Seats'],
-            location_city=data['Location_City'],
-            pick_up_day=data['Pick_Up_Day'],
-            pick_up_month=data['Pick_Up_Month'],
-            drop_off_day=data['Drop_Off_Day'],
-            drop_off_month=data['Drop_Off_Month'],
-            credit_score=data.get('Credit_Score', 700)  # Default credit score
-        )
-        return jsonify({"estimated_price": estimated_price}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+# @app.route('/predict-price', methods=['POST'])
+# def predict_price():
+#     data = request.json
+#     try:
+#         estimated_price = estimator.estimate_price(
+#             car_brand=data['Car_Brand'],
+#             car_model=data['Car_Model'],
+#             seats=data['Seats'],
+#             location_city=data['Location_City'],
+#             pick_up_day=data['Pick_Up_Day'],
+#             pick_up_month=data['Pick_Up_Month'],
+#             drop_off_day=data['Drop_Off_Day'],
+#             drop_off_month=data['Drop_Off_Month'],
+#             credit_score=data.get('Credit_Score', 700)  # Default credit score
+#         )
+#         return jsonify({"estimated_price": estimated_price}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 400
+
+@app.route('/accounts/<int:account_id>', methods=['GET'])
+def get_account(account_id):
+    account = Account.query.get(account_id)
+    if account:
+        if account.MemberId:
+            customer = Customer.query.get(account.MemberId)
+            if customer:
+                return jsonify({"name": f"{customer.FirstName} {customer.LastName}"})
+            company = Company.query.get(account.MemberId)
+            if company:
+                return jsonify({"name": company.Name})
+    return jsonify({"error": "Account not found"}), 404
+
+@app.route('/reservations/<int:reservation_id>/extend', methods=['PUT'])
+def extend_reservation(reservation_id):
+    reservation = Reservation.query.get(reservation_id)
+    if reservation:
+        reservation.DropOffTime += timedelta(weeks=1)
+        db.session.commit()
+        return jsonify({"message": "Reservation extended"}), 200
+    return jsonify({"error": "Reservation not found"}), 404
+
+@app.route('/car-types', methods=['GET'])
+def list_car_types():
+    """
+    List all car types available in the database.
+    """
+    car_types = CarType.query.all()  
+    if not car_types:
+        return jsonify({"error": "No car types found"}), 404
+    return jsonify([
+        {"TypeId": car_type.TypeId, "Brand": car_type.Brand, "Model": car_type.Model}
+        for car_type in car_types
+    ]), 200
+
+
+@app.route('/car-types/<int:type_id>', methods=['GET'])
+def get_car_type_by_id(type_id):
+    """Retrieve a car type by its ID."""
+    car_type = CarType.query.get(type_id)
+    if not car_type:
+        return jsonify({"error": "Car type not found"}), 404
+    return jsonify({"type": f"{car_type.Brand} {car_type.Model}"}), 200
+
+@app.route('/locations', methods=['GET'])
+def list_locations():
+    """
+    List all branch locations available in the database.
+    """
+    locations = BranchLocation.query.all()
+    if not locations:
+        return jsonify({"error": "No locations found"}), 404
+
+    return jsonify([
+        {"Id": location.Id, "Street": location.Street, "City": location.City, "State": location.State, "ZipCode": location.ZipCode, "Country": location.Country}
+        for location in locations
+    ]), 200
+
+@app.route('/locations/<int:location_id>', methods=['GET'])
+def get_location_by_id(location_id):
+    """
+    Retrieve a branch location by its ID.
+    """
+    location = BranchLocation.query.get(location_id)
+    print(location)
+    if not location:
+        return jsonify({"error": "Location not found"}), 404
+    return jsonify({
+        "location": f"{location.Street}, {location.City}, {location.State} {location.ZipCode}"
+    }), 200
+

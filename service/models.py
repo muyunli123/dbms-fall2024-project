@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import validates
 
 db = SQLAlchemy()
 
@@ -11,6 +12,13 @@ class Customer(db.Model):
     SSN = db.Column(db.String(11))
     DriverLicense = db.Column(db.String(20))
     Age = db.Column(db.Integer)
+
+    @validates('DoB')
+    def validate_dob(self, key, value):
+        if isinstance(value, str):
+            # Automatically convert string to date
+            return datetime.strptime(value, "%Y-%m-%d").date()
+        return value
 
 class Company(db.Model):
     __tablename__ = "COMPANY"
@@ -58,6 +66,10 @@ class CarType(db.Model):
     Door = db.Column(db.Integer)
     Auto = db.Column(db.Boolean)
     CompetitivePrice = db.Column(db.Numeric(10, 2))
+    
+    # @classmethod
+    # def retrieve_car_type(cls, type_id): 
+    #     return cls.query.get(type_id)
 
 class Car(db.Model):
     __tablename__ = "CAR"
@@ -100,6 +112,13 @@ class Reservation(db.Model):
     DiscountCode = db.Column(db.String(10), db.ForeignKey("DISCOUNT.Code"))
     InsurancePlanPricePerDay = db.Column(db.Numeric(10, 2))
     TotalPrice = db.Column(db.Numeric(15, 2))  # Derived attribute
+
+    @validates('PickUpTime', 'DropOffTime')
+    def validate_datetime(self, key, value):
+        if isinstance(value, str):
+            # Automatically convert string to datetime
+            return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        return value
 
     # CRUD Methods for Reservation
     @classmethod
@@ -175,7 +194,6 @@ class Reservation(db.Model):
         }
 
     # Deserialize a dictionary into a Reservation object
-    @classmethod
     def deserialize(cls, data):
         """Create or update a Reservation object from a dictionary."""
         return cls(
