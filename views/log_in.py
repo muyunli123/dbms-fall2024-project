@@ -130,17 +130,17 @@ else:
     create_button = st.button("Create Reservation")
     if create_button:
         st.write("Your reservation has been submitted. We will inform you when your application is approved")
-        # if create_new_reservation(
-        #     account_id=st.session_state.account_id,
-        #     car_type_id=car_type_choices[selected_car_type],
-        #     pick_up_time=datetime.combine(pick_up_time, datetime.min.time()),
-        #     pick_up_location_id=location_choices[selected_pick_up_location],
-        #     drop_off_time=datetime.combine(drop_off_time, datetime.min.time()),
-        #     drop_off_location_id=location_choices[selected_drop_off_location]
-        # ):
-        #     st.success("Reservation created successfully!")
-        #     st.experimental_rerun()
-        # else:
-        #     st.error("Failed to create reservation.")
+        if create_new_reservation(
+            account_id=st.session_state.account_id,
+            car_type_id=car_type_choices[selected_car_type],
+            pick_up_time=datetime.combine(pick_up_time, datetime.min.time()),
+            pick_up_location_id=location_choices[selected_pick_up_location],
+            drop_off_time=datetime.combine(drop_off_time, datetime.min.time()),
+            drop_off_location_id=location_choices[selected_drop_off_location]
+        ):
+            st.success("Reservation created successfully!")
+            st.experimental_rerun()
+        else:
+            st.error("Failed to create reservation.")
 
     st.button("Logout", on_click=logout)  # Logout button
