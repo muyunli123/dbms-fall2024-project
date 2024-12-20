@@ -6,9 +6,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import joblib
 import numpy as np
-
-
-
 from service.db_utils import get_db_connection
 
 # load data
@@ -61,23 +58,6 @@ class RentalPriceEstimator:
         # Select features and target
         data = df[['brand', 'model', 'seats', 'pickupcity', 'pick_up_day', 'pick_up_month',
                 'drop_off_day', 'drop_off_month', 'creditscore', 'price']]
-
-        # np.random.seed(42) 
-        # num_rows = 100
-
-        # Create sample data
-        # data = pd.DataFrame({
-        #     'brand': np.random.choice(['Toyota', 'Honda', 'Ford', 'BMW', 'Audi'], num_rows),
-        #     'model': np.random.choice(['Corolla', 'Civic', 'Focus', 'X5', 'A4'], num_rows),
-        #     'seats': np.random.randint(2, 8, num_rows),  # Random number of seats between 2 and 7
-        #     'pickupcity': np.random.choice(['New York', 'Los Angeles', 'Chicago', 'Houston', 'Miami'], num_rows),
-        #     'pick_up_day': np.random.randint(0, 7, num_rows),  # Day of the week (0 = Monday)
-        #     'pick_up_month': np.random.randint(1, 13, num_rows),  # Month (1 to 12)
-        #     'drop_off_day': np.random.randint(0, 7, num_rows),  # Day of the week (0 = Monday)
-        #     'drop_off_month': np.random.randint(1, 13, num_rows),  # Month (1 to 12)
-        #     'credit_score': np.random.randint(300, 851, num_rows),  # Credit score between 300 and 850
-        #     'price': np.random.uniform(50, 500, num_rows)  # Rental price between $50 and $500
-        # })
 
         # Missing values
         data = data.dropna(subset=['brand', 'model', 'pickupcity', 'pick_up_day', 'pick_up_month',
@@ -135,17 +115,6 @@ class RentalPriceEstimator:
         estimated_price = self.model.predict(input_data)[0]
         return round(estimated_price, 2)
 
-
-
-# reservation_data = pd.read_sql(Reservation.query.statement, db.engine)
-# car_data = pd.read_sql(CarType.query.statement, db.engine)
-# branch_data = pd.read_sql(BranchLocation.query.statement, db.engine)
-
-# reservation_data = pd.read_csv("service/reservation.csv")
-# car_data = pd.read_csv("service/car_type.csv")
-# branch_data = pd.read_csv("service/branch.csv")
-# customer_data = pd.read_csv("service/customer.csv")
-# account_data = pd.read_csv("service/account.csv")
 estimator = RentalPriceEstimator()
 estimator.train_model(reservation_data, car_data, branch_data, account_data, customer_data)
 
