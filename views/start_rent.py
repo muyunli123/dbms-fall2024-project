@@ -34,7 +34,6 @@ if st.button("Get Rental Price Estimate"):
         "Drop_Off_Month": drop_off_month,
         "Credit_Score": credit_score
     }
-    # st.success(f"Estimated Rental Price: $275.23")
     # API call to the Flask route
     try:
         response = requests.post(f"{FLASK_API_BASE_URL}/predict-price", json=payload)
