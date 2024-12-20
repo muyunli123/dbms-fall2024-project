@@ -3,6 +3,7 @@ from flask import current_app as app
 from service.models import db, Reservation, Account, Company, Customer, CarType, BranchLocation
 import joblib
 from datetime import timedelta
+from service.ml_model import RentalPriceEstimator
 
 
 @app.route('/')
@@ -58,26 +59,26 @@ def list_reservations_by_account(account_id):
 
 
 # Load the trained model
-# estimator = joblib.load('rental_price_model.pkl')
+estimator = joblib.load('service/rental_price_model.pkl')
 
-# @app.route('/predict-price', methods=['POST'])
-# def predict_price():
-#     data = request.json
-#     try:
-#         estimated_price = estimator.estimate_price(
-#             car_brand=data['Car_Brand'],
-#             car_model=data['Car_Model'],
-#             seats=data['Seats'],
-#             location_city=data['Location_City'],
-#             pick_up_day=data['Pick_Up_Day'],
-#             pick_up_month=data['Pick_Up_Month'],
-#             drop_off_day=data['Drop_Off_Day'],
-#             drop_off_month=data['Drop_Off_Month'],
-#             credit_score=data.get('Credit_Score', 700)  # Default credit score
-#         )
-#         return jsonify({"estimated_price": estimated_price}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 400
+@app.route('/predict-price', methods=['POST'])
+def predict_price():
+    data = request.json
+    try:
+        estimated_price = estimator.predict(
+            brand=data['Brand'],
+            model=data['Model'],
+            seats=data.get('Seats', 4),
+            pickupcity=data['Location_City'],
+            pick_up_day=data['Pick_Up_Day'],
+            pick_up_month=data['Pick_Up_Month'],
+            drop_off_day=data['Drop_Off_Day'],
+            drop_off_month=data['Drop_Off_Month'],
+            credit_score=data.get('Credit_Score', 700)  # Default credit score
+        )
+        return jsonify({"estimated_price": estimated_price}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 @app.route('/accounts/<int:account_id>', methods=['GET'])
 def get_account(account_id):
