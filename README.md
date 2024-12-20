@@ -1,5 +1,9 @@
 # dbms-fall2024-project
 
+### install odbc driver
+- https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/install-microsoft-odbc-driver-sql-server-macos?view=sql-server-ver15
+- `pip install pyodbc`
+
 ### install dependencies: 
 `pip install -r requirements.txt`
 
